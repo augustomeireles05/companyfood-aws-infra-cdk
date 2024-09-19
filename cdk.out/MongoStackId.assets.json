@@ -1,0 +1,19 @@
+{
+  "version": "36.0.24",
+  "files": {
+    "1805dfca787a02404535a7b9e9dde6a218817aa7e7cec4386b6d1f00dbeed722": {
+      "source": {
+        "path": "MongoStackId.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "current_account-current_region": {
+          "bucketName": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}",
+          "objectKey": "1805dfca787a02404535a7b9e9dde6a218817aa7e7cec4386b6d1f00dbeed722.json",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-file-publishing-role-${AWS::AccountId}-${AWS::Region}"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

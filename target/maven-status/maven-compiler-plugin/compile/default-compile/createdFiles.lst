@@ -1,0 +1,7 @@
+com\myorg\CompanyfoodAwsClusterStack.class
+com\myorg\CompanyfoodAwsMongoEC2Stack.class
+com\myorg\CompanyfoodAwsServiceStack.class
+com\myorg\CompanyfoodAwsInfraStack.class
+com\myorg\CompanyfoodAwsVpcStack.class
+com\myorg\CompanyfoodAwsRDSStack.class
+com\myorg\CompanyfoodAwsInfraApp.class

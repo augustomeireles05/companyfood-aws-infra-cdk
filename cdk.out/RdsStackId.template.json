@@ -1,0 +1,403 @@
+{
+ "Parameters": {
+  "password": {
+   "Type": "String",
+   "Description": "Password of the payment-ms database"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Resources": {
+  "MySecurityGroupfrom0000033063CED0165": {
+   "Type": "AWS::EC2::SecurityGroupIngress",
+   "Properties": {
+    "CidrIp": "0.0.0.0/0",
+    "Description": "from 0.0.0.0/0:3306",
+    "FromPort": 3306,
+    "GroupId": {
+     "Fn::ImportValue": "VpcId:ExportsOutputFnGetAttCompanyVpcC336B6CEDefaultSecurityGroup2425A311"
+    },
+    "IpProtocol": "tcp",
+    "ToPort": 3306
+   },
+   "Metadata": {
+    "aws:cdk:path": "RdsStackId/MySecurityGroup/from 0.0.0.0_0:3306"
+   }
+  },
+  "paymentrdsSubnetGroup261D3145": {
+   "Type": "AWS::RDS::DBSubnetGroup",
+   "Properties": {
+    "DBSubnetGroupDescription": "Subnet group for payment-rds database",
+    "SubnetIds": [
+     {
+      "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPrivateSubnet1Subnet62D4669D1CB30236"
+     },
+     {
+      "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPrivateSubnet2SubnetEBA8314D42E39537"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "RdsStackId/payment-rds/SubnetGroup/Default"
+   }
+  },
+  "paymentrdsD20FFBCE": {
+   "Type": "AWS::RDS::DBInstance",
+   "Properties": {
+    "AllocatedStorage": "10",
+    "CopyTagsToSnapshot": true,
+    "DBInstanceClass": "db.t2.micro",
+    "DBInstanceIdentifier": "companyfood-aws-payment-db",
+    "DBSubnetGroupName": {
+     "Ref": "paymentrdsSubnetGroup261D3145"
+    },
+    "Engine": "mysql",
+    "EngineVersion": "8.0.35",
+    "MasterUserPassword": {
+     "Ref": "password"
+    },
+    "MasterUsername": "admin",
+    "MultiAZ": false,
+    "PubliclyAccessible": false,
+    "StorageType": "gp2",
+    "VPCSecurityGroups": [
+     {
+      "Fn::ImportValue": "VpcId:ExportsOutputFnGetAttCompanyVpcC336B6CEDefaultSecurityGroup2425A311"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Snapshot",
+   "DeletionPolicy": "Snapshot",
+   "Metadata": {
+    "aws:cdk:path": "RdsStackId/payment-rds/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/2WN3QqCQBCFn8X7dVNBuk8h7KbQB4hxHWMrZ2VnNgnx3cOibro6P3yck+k0z3USwcSx6W7x3bZ6bgTMTRU9ncDDgIJe1cgueIMKJj7PaDJd9NSgCd7Kc+9dGCu6eGRWvmM9lyDQAmNFLEAGVRNaQnmD63C5+yu+6LKs+RhkDLK633PRU+Gos2IdLeoAD9ikW53oNI2ubG3sA4kdUNcffQGtFaOp2gAAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "RdsStackId/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Outputs": {
+  "paymentdbendpoint": {
+   "Value": {
+    "Fn::GetAtt": [
+     "paymentrdsD20FFBCE",
+     "Endpoint.Address"
+    ]
+   },
+   "Export": {
+    "Name": "payment-db-endpoint"
+   }
+  },
+  "paymentdbpassword": {
+   "Value": {
+    "Ref": "password"
+   },
+   "Export": {
+    "Name": "payment-db-password"
+   }
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-3"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-4"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-2"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "il-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Equals": [
+      {
+       "Ref": "AWS::Region"
+      },
+      "us-west-2"
+     ]
+    }
+   ]
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

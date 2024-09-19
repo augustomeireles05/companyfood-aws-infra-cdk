@@ -1,0 +1,724 @@
+{
+ "Resources": {
+  "CompanyFargateServiceLB0B06DF48": {
+   "Type": "AWS::ElasticLoadBalancingV2::LoadBalancer",
+   "Properties": {
+    "LoadBalancerAttributes": [
+     {
+      "Key": "deletion_protection.enabled",
+      "Value": "false"
+     }
+    ],
+    "Scheme": "internet-facing",
+    "SecurityGroups": [
+     {
+      "Fn::GetAtt": [
+       "CompanyFargateServiceLBSecurityGroup6B9C79A5",
+       "GroupId"
+      ]
+     }
+    ],
+    "Subnets": [
+     {
+      "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPublicSubnet1Subnet5632C924E004BC4B"
+     },
+     {
+      "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPublicSubnet2Subnet9EBB919396B789EF"
+     }
+    ],
+    "Type": "application"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/LB/Resource"
+   }
+  },
+  "CompanyFargateServiceLBSecurityGroup6B9C79A5": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Automatically created Security Group for ELB ServiceIdCompanyFargateServiceLB577B15D5",
+    "SecurityGroupIngress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow from anyone on port 80",
+      "FromPort": 80,
+      "IpProtocol": "tcp",
+      "ToPort": 80
+     }
+    ],
+    "VpcId": {
+     "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcC336B6CEAEEF108D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/LB/SecurityGroup/Resource"
+   }
+  },
+  "CompanyFargateServiceLBSecurityGrouptoServiceIdCompanyFargateServiceSecurityGroupDB6A11FA8080CC717ACF": {
+   "Type": "AWS::EC2::SecurityGroupEgress",
+   "Properties": {
+    "Description": "Load balancer to target",
+    "DestinationSecurityGroupId": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceSecurityGroupA5CB27EE",
+      "GroupId"
+     ]
+    },
+    "FromPort": 8080,
+    "GroupId": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceLBSecurityGroup6B9C79A5",
+      "GroupId"
+     ]
+    },
+    "IpProtocol": "tcp",
+    "ToPort": 8080
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/LB/SecurityGroup/to ServiceIdCompanyFargateServiceSecurityGroupDB6A11FA:8080"
+   }
+  },
+  "CompanyFargateServiceLBPublicListener0ED02627": {
+   "Type": "AWS::ElasticLoadBalancingV2::Listener",
+   "Properties": {
+    "DefaultActions": [
+     {
+      "TargetGroupArn": {
+       "Ref": "CompanyFargateServiceLBPublicListenerECSGroupD3861B5D"
+      },
+      "Type": "forward"
+     }
+    ],
+    "LoadBalancerArn": {
+     "Ref": "CompanyFargateServiceLB0B06DF48"
+    },
+    "Port": 80,
+    "Protocol": "HTTP"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/LB/PublicListener/Resource"
+   }
+  },
+  "CompanyFargateServiceLBPublicListenerECSGroupD3861B5D": {
+   "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
+   "Properties": {
+    "Port": 80,
+    "Protocol": "HTTP",
+    "TargetGroupAttributes": [
+     {
+      "Key": "stickiness.enabled",
+      "Value": "false"
+     }
+    ],
+    "TargetType": "ip",
+    "VpcId": {
+     "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcC336B6CEAEEF108D"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/LB/PublicListener/ECSGroup/Resource"
+   }
+  },
+  "CompanyFargateServiceTaskDefTaskRole3C5A0A35": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/TaskDef/TaskRole/Resource"
+   }
+  },
+  "CompanyFargateServiceTaskDefCCDBC800": {
+   "Type": "AWS::ECS::TaskDefinition",
+   "Properties": {
+    "ContainerDefinitions": [
+     {
+      "Environment": [
+       {
+        "Name": "SPRING_DATA_MONGODB_URI",
+        "Value": {
+         "Fn::Join": [
+          "",
+          [
+           "mongodb://",
+           {
+            "Fn::ImportValue": "mongodb-instance-endpoint"
+           },
+           ":27017/foodcompanyorder"
+          ]
+         ]
+        }
+       },
+       {
+        "Name": "SPRING_DATA_MONGODB_USERNAME",
+        "Value": "admin"
+       },
+       {
+        "Name": "SPRING_DATA_MONGODB_PASSWORD",
+        "Value": {
+         "Fn::ImportValue": "mongodb-password"
+        }
+       }
+      ],
+      "Essential": true,
+      "Image": "augustomeireles/order-ms",
+      "LogConfiguration": {
+       "LogDriver": "awslogs",
+       "Options": {
+        "awslogs-group": {
+         "Ref": "CompanyFargateServiceTaskDefordermscontainerLogGroup02584F81"
+        },
+        "awslogs-stream-prefix": "CompanyFargateService",
+        "awslogs-region": {
+         "Ref": "AWS::Region"
+        }
+       }
+      },
+      "Name": "order-ms-container",
+      "PortMappings": [
+       {
+        "ContainerPort": 8080,
+        "Protocol": "tcp"
+       }
+      ]
+     }
+    ],
+    "Cpu": "512",
+    "ExecutionRoleArn": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceTaskDefExecutionRole5A9BD4C4",
+      "Arn"
+     ]
+    },
+    "Family": "ServiceIdCompanyFargateServiceTaskDef4209B223",
+    "Memory": "1024",
+    "NetworkMode": "awsvpc",
+    "RequiresCompatibilities": [
+     "FARGATE"
+    ],
+    "TaskRoleArn": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceTaskDefTaskRole3C5A0A35",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/TaskDef/Resource"
+   }
+  },
+  "CompanyFargateServiceTaskDefordermscontainerLogGroup02584F81": {
+   "Type": "AWS::Logs::LogGroup",
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/TaskDef/order-ms-container/LogGroup/Resource"
+   }
+  },
+  "CompanyFargateServiceTaskDefExecutionRole5A9BD4C4": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/TaskDef/ExecutionRole/Resource"
+   }
+  },
+  "CompanyFargateServiceTaskDefExecutionRoleDefaultPolicy66236D6B": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "CompanyFargateServiceTaskDefordermscontainerLogGroup02584F81",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CompanyFargateServiceTaskDefExecutionRoleDefaultPolicy66236D6B",
+    "Roles": [
+     {
+      "Ref": "CompanyFargateServiceTaskDefExecutionRole5A9BD4C4"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/TaskDef/ExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "CompanyFargateService34B54C86": {
+   "Type": "AWS::ECS::Service",
+   "Properties": {
+    "Cluster": {
+     "Fn::ImportValue": "ClusterId:ExportsOutputRefCompanyCluster65105357A2A1E598"
+    },
+    "DeploymentConfiguration": {
+     "MaximumPercent": 200,
+     "MinimumHealthyPercent": 50
+    },
+    "DesiredCount": 2,
+    "EnableECSManagedTags": false,
+    "HealthCheckGracePeriodSeconds": 60,
+    "LaunchType": "FARGATE",
+    "LoadBalancers": [
+     {
+      "ContainerName": "order-ms-container",
+      "ContainerPort": 8080,
+      "TargetGroupArn": {
+       "Ref": "CompanyFargateServiceLBPublicListenerECSGroupD3861B5D"
+      }
+     }
+    ],
+    "NetworkConfiguration": {
+     "AwsvpcConfiguration": {
+      "AssignPublicIp": "ENABLED",
+      "SecurityGroups": [
+       {
+        "Fn::GetAtt": [
+         "CompanyFargateServiceSecurityGroupA5CB27EE",
+         "GroupId"
+        ]
+       }
+      ],
+      "Subnets": [
+       {
+        "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPublicSubnet1Subnet5632C924E004BC4B"
+       },
+       {
+        "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcPublicSubnet2Subnet9EBB919396B789EF"
+       }
+      ]
+     }
+    },
+    "ServiceName": "company-fargate-service",
+    "TaskDefinition": {
+     "Ref": "CompanyFargateServiceTaskDefCCDBC800"
+    }
+   },
+   "DependsOn": [
+    "CompanyFargateServiceLBPublicListenerECSGroupD3861B5D",
+    "CompanyFargateServiceLBPublicListener0ED02627",
+    "CompanyFargateServiceTaskDefTaskRole3C5A0A35"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/Service/Service"
+   }
+  },
+  "CompanyFargateServiceSecurityGroupA5CB27EE": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "ServiceId/CompanyFargateService/Service/SecurityGroup",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "VpcId": {
+     "Fn::ImportValue": "VpcId:ExportsOutputRefCompanyVpcC336B6CEAEEF108D"
+    }
+   },
+   "DependsOn": [
+    "CompanyFargateServiceTaskDefTaskRole3C5A0A35"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/Service/SecurityGroup/Resource"
+   }
+  },
+  "CompanyFargateServiceSecurityGroupfromServiceIdCompanyFargateServiceLBSecurityGroup9DF99C0D8080850E8A14": {
+   "Type": "AWS::EC2::SecurityGroupIngress",
+   "Properties": {
+    "Description": "Load balancer to target",
+    "FromPort": 8080,
+    "GroupId": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceSecurityGroupA5CB27EE",
+      "GroupId"
+     ]
+    },
+    "IpProtocol": "tcp",
+    "SourceSecurityGroupId": {
+     "Fn::GetAtt": [
+      "CompanyFargateServiceLBSecurityGroup6B9C79A5",
+      "GroupId"
+     ]
+    },
+    "ToPort": 8080
+   },
+   "DependsOn": [
+    "CompanyFargateServiceTaskDefTaskRole3C5A0A35"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CompanyFargateService/Service/SecurityGroup/from ServiceIdCompanyFargateServiceLBSecurityGroup9DF99C0D:8080"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/32Q3W7CMAyFn4X7kNFKaNcb+9EmpE0t98ikpvIISRW7IBT13aemgMo27crnfDmxneQ6m8/1bAJHnppqN7W00bEUMDsFR15HNLxuQASDY/3QNJYMCHm39FA9ggVnsHqBUINgieFABhVaYCFjPVSblCBXH3Id/74d1GJ768c5YkF3zlz06HwFoUZ5Db5t+sjIdgpNrmOJpg0kp2vkf/BcB2T+hd9c4n1P1vH83BXw7gm35KjfZBh/S7wTIIdhxH58VRqUZKcI9joW3iaa6qe3ZE69HVSnrK9Zx6Wvr+tfdNf17qOVphVVIPs2DP3HeuFdlfbo1Dsc4C671zOdZZMvJpqG1gntURdD/QYODX9nGQIAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ServiceId/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Outputs": {
+  "CompanyFargateServiceLoadBalancerDNS31F46302": {
+   "Value": {
+    "Fn::GetAtt": [
+     "CompanyFargateServiceLB0B06DF48",
+     "DNSName"
+    ]
+   }
+  },
+  "CompanyFargateServiceServiceURL6851DAB6": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "http://",
+      {
+       "Fn::GetAtt": [
+        "CompanyFargateServiceLB0B06DF48",
+        "DNSName"
+       ]
+      }
+     ]
+    ]
+   }
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-3"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-4"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-2"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "il-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Equals": [
+      {
+       "Ref": "AWS::Region"
+      },
+      "us-west-2"
+     ]
+    }
+   ]
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}
